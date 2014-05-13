@@ -20,12 +20,24 @@ public class ParseTree {
     
     String t[] = str.split("[\\s]");
     for (int i = 0; i < t.length; i++) {
+      String curr = "";
       for (int j = 0; j < t[i].length(); j++) {
         if (isPunc(t[i].charAt(j))) {
+          if (curr.length() > 0) {
+            tokens.addElement(curr);
+            curr = "";
+          }
           tokens.addElement("" + t[i].charAt(j));
+          t[i] = t[i].substring(1);
+          //i--;
+          break;
         }
+        curr = curr + t[i].charAt(j);
       }
+      if (curr.length() > 0) tokens.addElement(curr);
     }
+    
+    System.err.println(tokens);
     
     return tokens;
   }
