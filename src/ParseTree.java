@@ -2,12 +2,8 @@ import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-
+//parse model in Backus-Naur form
 public class ParseTree {
-  
-  private class Sentence {
-    
-  }
   
   public static boolean isPunc(char c) {
     return "~!@#$%^()_+`-={}|[]\\:\";'<>?,./\'".indexOf(c) != -1;
@@ -28,17 +24,18 @@ public class ParseTree {
             curr = "";
           }
           tokens.addElement("" + t[i].charAt(j));
-          t[i] = t[i].substring(1);
-          //i--;
+          t[i] = t[i].substring(j+1);
+          if (t[i].length() > 0) {
+            i--;
+            //break;
+          }
           break;
         }
         curr = curr + t[i].charAt(j);
       }
       if (curr.length() > 0) tokens.addElement(curr);
     }
-    
-    System.err.println(tokens);
-    
+    //System.err.println(tokens);
     return tokens;
   }
 }
