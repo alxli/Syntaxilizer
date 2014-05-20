@@ -30,8 +30,7 @@ public class Main {
     //field.setFont(new Font(""));
     
     panel.add(field);
-    
-    
+        
     f.add(panel);
   }
 	
