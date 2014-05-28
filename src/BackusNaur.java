@@ -4,13 +4,32 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
 
+
+/**
+ * Extended Backus-Naur Form Implementation
+ * 
+ *    |   - OR operator: Either the LHS or the RHS occurs
+ * 
+ * Grouping Expressions:
+ *    []  - Enclosed expression can occur 0 or 1 times
+ *    {}  - Enclosed expression can occur 0 or more times
+ *    {}* - Enclosed expression can occur 0 or more times
+ *    {}+ - Enclosed expression can occur 1 or more times
+ *    {}? - Enclosed expression can occur 0 or 1 times
+ * 
+ * Quantifiers:
+ *    * - The preceding item can occur 0 or more times
+ *    + - The preceding item can occur 1 or more times
+ *    ? - The preceding item can occur 0 or 1 times
+ */
+
 public class BackusNaur {
   
-  static void db(Object o) { if (false) System.err.println(o); }
+  static void db(Object o) { if (true) System.err.println(o); }
   
   private class Definition {
-    String lhs;
-    BranchExpr expr;
+    String lhs; //the symbol
+    BranchExpr expr; //the expression
   }
   
   private class BranchExpr {
@@ -19,11 +38,15 @@ public class BackusNaur {
     boolean hasRHS;
     ConcatExpr expr; //null if hasRHS
     BranchExpr lhs, rhs;
+    
+    char quantifier;
   }
   
   private class ConcatExpr {
     //the things that it concatenates
     Vector<Item> items;
+    
+    char quantifier;
   }
   
   private class Item {
@@ -38,6 +61,10 @@ public class BackusNaur {
   
   //splits into tokens
   private static Vector<String> getTokens(String s) {
+    //Surround '{', '}', '[', ']', characters with spaces 
+    s = s.replace("{", " { ").replace("}", " } ");
+    s = s.replace("[", " [ ").replace("]", " ] ");
+    
     Vector<String> tokens = new Vector<String>();
     
     boolean quoteOpened = false;
@@ -74,9 +101,12 @@ public class BackusNaur {
     return (s.charAt(0) == '<') &&
            (s.charAt(s.length() - 1) == '>');
   }
-  
+
+  /**
+   * @params: tokens, and range of tokens [lo, hi) to consider
+   */
   private ConcatExpr parseConcatExpr(Vector<String> tokens,
-                                     int lo, int hi) { // range of tokens to consider
+                                     int lo, int hi) {
     ConcatExpr expr = new ConcatExpr();
     expr.items = new Vector<Item>();
     for (int i = lo; i < hi; i++) {
@@ -90,13 +120,18 @@ public class BackusNaur {
     return expr;
   }
   
+  /**
+   * @params: tokens, and range of tokens [lo, hi) to consider
+   */
   private BranchExpr parseBranchExpr(Vector<String> tokens,
-                                     int lo, int hi) { // range of tokens to consider
+                                     int lo, int hi) throws Exception {
     if (lo >= hi) return null; // ???
     db(lo + " " + hi);
-    //find the index of the OR symbol
-    int idx = tokens.indexOf("|", lo);
-    if (idx == -1 || idx >= hi) { //no OR signs in the range
+    
+    //find the last index of the OR symbol, before index hi
+    //this is because OR operators works like ((A | B) | C), not (A | (B | C))
+    int idx = tokens.lastIndexOf("|", hi - 1);
+    if (idx == -1 || idx < lo) { //no OR signs in the range
       BranchExpr expr = new BranchExpr();
       expr.hasRHS = false;
       expr.expr = parseConcatExpr(tokens, lo, hi);
@@ -144,6 +179,9 @@ public class BackusNaur {
         if ((line = line.trim()).isEmpty()) continue;
         
         Vector<String> lineTokens = getTokens(line);
+        
+        db(lineTokens);
+        
         if (lineTokens.get(1).equals("::=")) {
           if (!tokens.isEmpty()) {
             try {
@@ -165,6 +203,7 @@ public class BackusNaur {
       e.printStackTrace();
     }
   }
+  
   
   public static void main(String[] args) {
     //System.out.println(getTokens("<opt-suffix-part> ::= \"Sr.\" | \"Jr.\" | <roman-numeral> | \"\""));
