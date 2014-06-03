@@ -1,0 +1,6 @@
+    <article> ::= <sentence> { <sentence> }
+   <sentence> ::= <declaration>
+<declaration> ::= <noun-phrase> { <verb-phrase> <noun-phrase> } [ <verb-phrase> ]
+<noun-phrase> ::= <noun> | [ <adjective> ] <noun-phrase>
+<verb-phrase> ::= <verb> | [ <adjective> ] <verb-phrase>
+       <word> ::= <noun> | <verb> | <adjective>
