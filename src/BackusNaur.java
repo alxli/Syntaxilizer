@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Vector;
 
 /**
@@ -14,6 +15,7 @@ import java.util.Vector;
  *    {}* - Enclosed expression can occur 0 or more times
  *    {}+ - Enclosed expression can occur 1 or more times
  *    {}? - Enclosed expression can occur 0 or 1 times
+ *    []  - Enclosed expression can occur 0 or 1 times
  * 
  * Quantifiers:
  *    * - The preceding item can occur 0 or more times
@@ -59,9 +61,10 @@ public class BackusNaur {
   
   //splits into tokens
   private static Vector<String> getTokens(String s) {
-    //Surround '{', '}', '[', ']', characters with spaces 
+    //Surround '{', '}', '[', ']', characters with spaces
+	//Convert [] to {}?
     s = s.replace("{", " { ").replace("}", " } ");
-    s = s.replace("[", " [ ").replace("]", " ] ");
+    s = s.replace("[", " { ").replace("]", " } ? ");
     
     Vector<String> tokens = new Vector<String>();
     
@@ -105,6 +108,8 @@ public class BackusNaur {
    */
   private ConcatExpr parseConcatExpr(Vector<String> tokens,
                                      int lo, int hi) {
+	db("concat: " + tokens.subList(lo, hi));
+	
     ConcatExpr expr = new ConcatExpr();
     expr.items = new Vector<Item>();
     for (int i = lo; i < hi; i++) {
@@ -124,7 +129,7 @@ public class BackusNaur {
   private BranchExpr parseBranchExpr(Vector<String> tokens,
                                      int lo, int hi) throws Exception {
     if (lo >= hi) return null; // ???
-    db(lo + " " + hi + ": " + "");
+    db(lo + " " + hi + ": " + tokens.subList(lo, hi));
     
     //find the last index of the OR symbol, before index hi
     //this is because OR operators works like ((A | B) | C), not (A | (B | C))
@@ -132,21 +137,22 @@ public class BackusNaur {
     if (idx == -1 || idx < lo) { //no OR signs in the range
       BranchExpr be = new BranchExpr();
       be.hasRHS = false;
-      /*
+      be.expr = new Vector<ConcatExpr>();
+      
       int curr = lo;
       
       while (curr < hi) {
         if (tokens.get(curr).equals("{")) { //does an open curly bracket exist?
           //find right bracket
-          int lidx = lo, ridx = tokens.indexOf("}", lidx);
+          int lidx = curr, ridx = tokens.indexOf("}", lidx);
           
           //check for existence and in range
-          if (ridx > hi || ridx == -1)
+          if (ridx >= hi || ridx == -1)
             throw new Exception("Mismatched brace quantifier {}.");
           
           //currently no support for multiple level brackets, e.g. {a{b}}
-          if (tokens.indexOf("{", lo + 1) != -1 &&
-              tokens.indexOf("{", lo + 1) < ridx) {
+          if (tokens.indexOf("{", lidx + 1) != -1 &&
+              tokens.indexOf("{", lidx + 1) < ridx) {
             throw new Exception("Currently only 1 level of brace quantifiers {} are supported.");
           }
           
@@ -155,7 +161,11 @@ public class BackusNaur {
             if (tokens.get(ridx).equals("*")) ce.quantifier = '*';
             else if (tokens.get(ridx).equals("+")) ce.quantifier = '+';
             else if (tokens.get(ridx).equals("?")) ce.quantifier = '?';
-            else ce.quantifier = '*';
+            else {
+              ce.quantifier = '*';
+              ridx--;
+            }
+            ridx++;
           }
           be.expr.add(ce);
           
@@ -168,7 +178,7 @@ public class BackusNaur {
         be.expr.add(parseConcatExpr(tokens, curr, ridx));
         curr = ridx; //move on to the next ConcatExpr to be parsed
       }
-      */
+      
       return be;
     }
     BranchExpr be = new BranchExpr();
@@ -195,8 +205,9 @@ public class BackusNaur {
   }
   
   //Where all the definitions are stored!
-  //private Vector<Definition> defs = new Vector<Definition>();
+  private Vector<Definition> defs = new Vector<Definition>();
   
+  //constructor from file
   public BackusNaur(File f) {
     BufferedReader in;
     try {
@@ -236,8 +247,46 @@ public class BackusNaur {
     }
   }
   
+  //constructor from String
+  public BackusNaur(String s) {
+    BufferedReader in;
+    try {
+      in = new BufferedReader(new StringReader(s));
+      int line_num = 0;
+      
+      String line;
+      Vector<String> tokens = new Vector<String>();
+      
+      while ((line = in.readLine()) != null) {
+        line_num++;
+        if ((line = line.trim()).isEmpty()) continue;
+        
+        Vector<String> lineTokens = getTokens(line);
+        
+        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
+          if (!lineTokens.isEmpty()) {
+            try {
+              defs.add(parseDefinition(lineTokens));
+            } catch (Exception e) {
+              System.err.println("Error parsing Backus-Naur file on line " + line_num);
+              System.err.println("\t" + e.getMessage());
+              e.printStackTrace();
+            }
+          }
+          tokens = lineTokens;
+        } else {
+          tokens.addAll(lineTokens);
+        }
+      }
+    } catch (IOException e) {
+      System.err.println("Error loading Backus-Naur from text.");
+      e.printStackTrace();
+    }
+  }
+  
+  
   public static void main(String[] args) {
     //System.out.println(getTokens("<opt-suffix-part> ::= \"Sr.\" | \"Jr.\" | <roman-numeral> | \"\""));
-    BackusNaur bn = new BackusNaur(new File("test.bn"));
+    BackusNaur bn = new BackusNaur(new File("resources/test.bn"));
   }
 }
