@@ -21,7 +21,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.JEditorPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
@@ -29,11 +29,11 @@ import javax.swing.border.BevelBorder;
 public class Main {
 
   static JFrame f;
-  public static final int WIDTH = 960;
+  public static final int WIDTH = 800;
   public static final int HEIGHT = WIDTH/4*3; //4:3 aspect ratio
   
   static JPanel panel; //the main JPanel
-  static JTextArea textArea;
+  static JEditorPane textArea;
   static JScrollPane scrollPane; //to contain the textArea
   
   //status bar at the bottom
@@ -85,10 +85,11 @@ public class Main {
     panel.add(step1, c);
     
     //create and customize the text field
-    textArea = new JTextArea(15, 0);
+    textArea = new JEditorPane();
+    textArea.setPreferredSize(new Dimension(WIDTH - 100, 250));
     textArea.setMargin(new Insets(3, 3, 3, 3)); //inside padding
-    textArea.setLineWrap(true);
-    textArea.setWrapStyleWord(true);
+    //textArea.setLineWrap(true);
+    //textArea.setWrapStyleWord(true);
     textArea.setFont(monospaceFont.deriveFont(13.0f));
     scrollPane = new JScrollPane(textArea);
     c.fill = GridBagConstraints.HORIZONTAL;
@@ -107,7 +108,7 @@ public class Main {
     statusPanel.setPreferredSize(new Dimension(f.getWidth(), 20));
     statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
     
-    statusLabel = new JLabel("Status bar");
+    statusLabel = new JLabel("Status Bar");
     statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
     statusPanel.add(statusLabel);
     

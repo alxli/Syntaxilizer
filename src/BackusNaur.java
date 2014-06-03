@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -27,10 +28,8 @@ public class BackusNaur {
   
   static void db(Object o) { if (true) System.err.println(o); }
   
-  private class Definition {
-    String lhs; //the symbol
-    BranchExpr expr; //the expression
-  }
+  //Where all the definitions are stored - HashMap<symbol, expression>
+  private HashMap<String, BranchExpr> defs = new HashMap<String, BranchExpr>();
   
   private class BranchExpr {
     //whether it has a RHS to be considered
@@ -59,10 +58,89 @@ public class BackusNaur {
     }
   }
   
-  //splits into tokens
+  /****************** CONSTRUCTION ******************/
+  
+  //constructor from file
+  public BackusNaur(File f) {
+    BufferedReader in;
+    try {
+      in = new BufferedReader(new FileReader(f));
+      int line_num = 0;
+      
+      String line;
+      Vector<String> tokens = new Vector<String>();
+      
+      while ((line = in.readLine()) != null) {
+        line_num++;
+        if ((line = line.trim()).isEmpty()) continue;
+        
+        Vector<String> lineTokens = getTokens(line);
+        
+        //db(lineTokens);
+        
+        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
+          if (!lineTokens.isEmpty()) {
+            try {
+              parseDefinition(lineTokens);
+            } catch (Exception e) {
+              System.err.println("Error parsing Backus-Naur file on line " + line_num);
+              System.err.println("\t" + e.getMessage());
+              e.printStackTrace();
+            }
+          }
+          tokens = lineTokens;
+        } else {
+          tokens.addAll(lineTokens);
+        }
+      }
+    } catch (IOException e) {
+      System.err.println("Error loading Backus-Naur definition file.");
+      System.err.println("\tCannot load file: " + f.getName());
+      e.printStackTrace();
+    }
+  }
+  
+  //constructor from String
+  public BackusNaur(String s) {
+    BufferedReader in;
+    try {
+      in = new BufferedReader(new StringReader(s));
+      int line_num = 0;
+      
+      String line;
+      Vector<String> tokens = new Vector<String>();
+      
+      while ((line = in.readLine()) != null) {
+        line_num++;
+        if ((line = line.trim()).isEmpty()) continue;
+        
+        Vector<String> lineTokens = getTokens(line);
+        
+        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
+          if (!lineTokens.isEmpty()) {
+            try {
+              parseDefinition(lineTokens);
+            } catch (Exception e) {
+              System.err.println("Error parsing Backus-Naur file on line " + line_num);
+              System.err.println("\t" + e.getMessage());
+              e.printStackTrace();
+            }
+          }
+          tokens = lineTokens;
+        } else {
+          tokens.addAll(lineTokens);
+        }
+      }
+    } catch (IOException e) {
+      System.err.println("Error loading Backus-Naur from text.");
+      e.printStackTrace();
+    }
+  }
+  
+  //preprocesses s, also splitting it into tokens
   private static Vector<String> getTokens(String s) {
     //Surround '{', '}', '[', ']', characters with spaces
-	//Convert [] to {}?
+    //Convert [] to {}?, which is the same representation
     s = s.replace("{", " { ").replace("}", " } ");
     s = s.replace("[", " { ").replace("]", " } ? ");
     
@@ -98,29 +176,17 @@ public class BackusNaur {
     return tokens;
   }
   
-  private static boolean validVariable(String s) {
-    return (s.charAt(0) == '<') &&
-           (s.charAt(s.length() - 1) == '>');
-  }
-
-  /**
-   * @params: tokens, and range of tokens [lo, hi) to consider
-   */
-  private ConcatExpr parseConcatExpr(Vector<String> tokens,
-                                     int lo, int hi) {
-	db("concat: " + tokens.subList(lo, hi));
-	
-    ConcatExpr expr = new ConcatExpr();
-    expr.items = new Vector<Item>();
-    for (int i = lo; i < hi; i++) {
-      String v = tokens.get(i);
-      if (v.length() >= 2 && v.charAt(0) == '<' && v.charAt(v.length() - 1) == '>') {
-        expr.items.add(new Item(v.substring(1, v.length() - 1), false));
-      } else {
-        expr.items.add(new Item(v, true)); //string literal
-      }
+  //parses the Vector of tokens and appends this to the list of tokens
+  private void parseDefinition(Vector<String> tokens) throws Exception {   
+    //check to make sure the LHS of the line is in angled brackets
+    if (!validVariable(tokens.get(0))) {
+      throw new Exception("1st token on each line must be enclosed in angle brackets.");
     }
-    return expr;
+    if (!tokens.get(1).equals("::=")) {
+      throw new Exception("2nd token on each line must be \"::=\".");
+    }
+    defs.put(tokens.get(0).substring(1, tokens.get(0).length() - 1),
+             parseBranchExpr(tokens, 2, tokens.size()));
   }
   
   /**
@@ -129,7 +195,7 @@ public class BackusNaur {
   private BranchExpr parseBranchExpr(Vector<String> tokens,
                                      int lo, int hi) throws Exception {
     if (lo >= hi) return null; // ???
-    db(lo + " " + hi + ": " + tokens.subList(lo, hi));
+    //db(lo + " " + hi + ": " + tokens.subList(lo, hi));
     
     //find the last index of the OR symbol, before index hi
     //this is because OR operators works like ((A | B) | C), not (A | (B | C))
@@ -188,105 +254,86 @@ public class BackusNaur {
     return be;
   }
   
-  private Definition parseDefinition(Vector<String> tokens) throws Exception {   
-    Definition def = new Definition();
-    
-    //check to make sure the LHS of the line is in angled brackets
-    if (!validVariable(tokens.get(0))) {
-      throw new Exception("1st token on each line must be enclosed in angle brackets.");
-    }
-    if (!tokens.get(1).equals("::=")) {
-      throw new Exception("2nd token on each line must be \"::=\".");
-    }
-    def.lhs = tokens.get(0);
-    def.expr = parseBranchExpr(tokens, 2, tokens.size());
-    
-    return def;
-  }
+  /**
+   * @params: tokens, and range of tokens [lo, hi) to consider
+   */
+  private ConcatExpr parseConcatExpr(Vector<String> tokens,
+                                     int lo, int hi) {
+    //db("concat: " + tokens.subList(lo, hi));
   
-  //Where all the definitions are stored!
-  private Vector<Definition> defs = new Vector<Definition>();
-  
-  //constructor from file
-  public BackusNaur(File f) {
-    BufferedReader in;
-    try {
-      in = new BufferedReader(new FileReader(f));
-      int line_num = 0;
-      
-      String line;
-      Vector<String> tokens = new Vector<String>();
-      
-      while ((line = in.readLine()) != null) {
-        line_num++;
-        if ((line = line.trim()).isEmpty()) continue;
-        
-        Vector<String> lineTokens = getTokens(line);
-        
-        db(lineTokens);
-        
-        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
-          if (!lineTokens.isEmpty()) {
-            try {
-              defs.add(parseDefinition(lineTokens));
-            } catch (Exception e) {
-              System.err.println("Error parsing Backus-Naur file on line " + line_num);
-              System.err.println("\t" + e.getMessage());
-              e.printStackTrace();
-            }
-          }
-          tokens = lineTokens;
-        } else {
-          tokens.addAll(lineTokens);
-        }
+    ConcatExpr expr = new ConcatExpr();
+    expr.items = new Vector<Item>();
+    for (int i = lo; i < hi; i++) {
+      String v = tokens.get(i);
+      if (v.length() >= 2 && v.charAt(0) == '<' && v.charAt(v.length() - 1) == '>') {
+        expr.items.add(new Item(v.substring(1, v.length() - 1), false));
+      } else {
+        expr.items.add(new Item(v, true)); //string literal
       }
-    } catch (IOException e) {
-      System.err.println("Error loading Backus-Naur definition file.");
-      System.err.println("\tCannot load file: " + f.getName());
-      e.printStackTrace();
     }
+    return expr;
   }
   
-  //constructor from String
-  public BackusNaur(String s) {
-    BufferedReader in;
-    try {
-      in = new BufferedReader(new StringReader(s));
-      int line_num = 0;
-      
-      String line;
-      Vector<String> tokens = new Vector<String>();
-      
-      while ((line = in.readLine()) != null) {
-        line_num++;
-        if ((line = line.trim()).isEmpty()) continue;
-        
-        Vector<String> lineTokens = getTokens(line);
-        
-        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
-          if (!lineTokens.isEmpty()) {
-            try {
-              defs.add(parseDefinition(lineTokens));
-            } catch (Exception e) {
-              System.err.println("Error parsing Backus-Naur file on line " + line_num);
-              System.err.println("\t" + e.getMessage());
-              e.printStackTrace();
-            }
-          }
-          tokens = lineTokens;
-        } else {
-          tokens.addAll(lineTokens);
-        }
+  private static boolean validVariable(String s) {
+    return (s.charAt(0) == '<') &&
+           (s.charAt(s.length() - 1) == '>');
+  }
+  
+  /******************* VALIDATION *******************/
+  
+  private Vector<String> invalidSymbols = new Vector<String>();
+  
+  private boolean validate(ConcatExpr ce) {
+    boolean valid = true;
+    for (int i = 0; i < ce.items.size(); i++) {
+      if (ce.items.get(i).isLiteral) continue;
+      //make sure the symbol is already defined
+      if (!defs.containsKey(ce.items.get(i).value)) {
+        valid = false;
+        invalidSymbols.add(ce.items.get(i).value);
       }
-    } catch (IOException e) {
-      System.err.println("Error loading Backus-Naur from text.");
-      e.printStackTrace();
     }
+    return valid;
   }
   
+  private boolean validate(BranchExpr be) {
+    if (be.hasRHS)
+      return validate(be.lhs) && validate(be.rhs);
+    boolean valid = true;
+    for (int i = 0; i < be.expr.size(); i++) {
+      if (!validate(be.expr.get(i))) valid = false;
+    }
+    return valid;
+  }
   
+  //validate the Backus-Naur form to make sure everything is defined.
+  private boolean validate() {
+    boolean valid = true;
+    //loops through all definitions
+    for (BranchExpr be : defs.values()) {
+      //recurse the tree to ensure that all "symbols" are defined
+      if (!validate(be)) valid = false;
+    }
+    if (!valid) System.err.println("Undefined symbols: " + invalidSymbols);
+    return valid;
+  }
+  
+  /****************** (Public) MATCHING INPUTS *******************/
+  
+  //returns whether the symbol s accepts a text t
+  public boolean matches(String s, String t) throws Exception {
+    if (!defs.containsKey(s))
+      throw new Exception("Error: symbol " + s + " not defined.");
+    
+    
+    return true;
+  }
+  
+  /******************* Tests ******************/
+
   public static void main(String[] args) {
     //System.out.println(getTokens("<opt-suffix-part> ::= \"Sr.\" | \"Jr.\" | <roman-numeral> | \"\""));
     BackusNaur bn = new BackusNaur(new File("resources/test.bn"));
+    db(bn.validate());
   }
 }
