@@ -33,8 +33,8 @@ public class Main {
   public static final int HEIGHT = WIDTH/4*3; //4:3 aspect ratio
   
   static JPanel panel; //the main JPanel
-  static JEditorPane textArea;
-  static JScrollPane scrollPane; //to contain the textArea
+  static JEditorPane editorBN; //Backus-Naur editor
+  static JScrollPane scrollPaneBN; //to contain the textArea
   
   //status bar at the bottom
   static JPanel statusPanel;
@@ -85,20 +85,21 @@ public class Main {
     panel.add(step1, c);
     
     //create and customize the text field
-    textArea = new JEditorPane();
-    textArea.setPreferredSize(new Dimension(WIDTH - 100, 250));
-    textArea.setMargin(new Insets(3, 3, 3, 3)); //inside padding
+    editorBN = new JEditorPane();
+    editorBN.setPreferredSize(new Dimension(WIDTH - 100, 250));
+    editorBN.setMargin(new Insets(3, 3, 3, 3)); //inside padding
     //textArea.setLineWrap(true);
     //textArea.setWrapStyleWord(true);
-    textArea.setFont(monospaceFont.deriveFont(13.0f));
-    scrollPane = new JScrollPane(textArea);
+    editorBN.setFont(monospaceFont.deriveFont(13.0f));
+    scrollPaneBN = new JScrollPane(editorBN);
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 1;
     c.weightx = 1.0;
     c.weighty = 1.0;
     c.insets = new Insets(0, 10, 10, 10);
-    panel.add(scrollPane, c);
+    panel.add(scrollPaneBN, c);
+    
     
     f.add(panel);
         

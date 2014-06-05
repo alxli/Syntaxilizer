@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -31,33 +32,6 @@ public class BackusNaur {
   //Where all the definitions are stored - HashMap<symbol, expression>
   private HashMap<String, BranchExpr> defs = new HashMap<String, BranchExpr>();
   
-  private class BranchExpr {
-    //whether it has a RHS to be considered
-    //otherwise, it is a singular Concat_Expr 
-    boolean hasRHS;
-    Vector<ConcatExpr> expr; //null or empty if hasRHS
-    BranchExpr lhs, rhs;
-    
-    char quantifier;
-  }
-  
-  private class ConcatExpr {
-    //the things that it concatenates
-    Vector<Item> items;
-    
-    char quantifier;
-  }
-  
-  private class Item {
-    String value;
-    boolean isLiteral;
-    
-    public Item(String v, boolean l) {
-      isLiteral = l;
-      value = v;
-    }
-  }
-  
   /****************** CONSTRUCTION ******************/
   
   //constructor from file
@@ -66,7 +40,6 @@ public class BackusNaur {
     try {
       in = new BufferedReader(new FileReader(f));
       int line_num = 0;
-      
       String line;
       Vector<String> tokens = new Vector<String>();
       
@@ -74,10 +47,7 @@ public class BackusNaur {
         line_num++;
         if ((line = line.trim()).isEmpty()) continue;
         
-        Vector<String> lineTokens = getTokens(line);
-        
-        //db(lineTokens);
-        
+        Vector<String> lineTokens = getTokens(line);       
         if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
           if (!lineTokens.isEmpty()) {
             try {
@@ -106,7 +76,6 @@ public class BackusNaur {
     try {
       in = new BufferedReader(new StringReader(s));
       int line_num = 0;
-      
       String line;
       Vector<String> tokens = new Vector<String>();
       
@@ -137,7 +106,7 @@ public class BackusNaur {
     }
   }
   
-  //preprocesses s, also splitting it into tokens
+  //Preprocesses a Backus-Naur, also splitting it into tokens
   private static Vector<String> getTokens(String s) {
     //Surround '{', '}', '[', ']', characters with spaces
     //Convert [] to {}?, which is the same representation
@@ -201,10 +170,8 @@ public class BackusNaur {
     //this is because OR operators works like ((A | B) | C), not (A | (B | C))
     int idx = tokens.lastIndexOf("|", hi - 1);
     if (idx == -1 || idx < lo) { //no OR signs in the range
-      BranchExpr be = new BranchExpr();
-      be.hasRHS = false;
-      be.expr = new Vector<ConcatExpr>();
-      
+      BranchExpr be = new BranchExpr(false);
+     
       int curr = lo;
       
       while (curr < hi) {
@@ -233,7 +200,7 @@ public class BackusNaur {
             }
             ridx++;
           }
-          be.expr.add(ce);
+          be.add(ce);
           
           curr = ridx + 1; //skip the current position to after the close brace
           continue; //keep parsing!!!!!
@@ -241,16 +208,15 @@ public class BackusNaur {
         //just parse a normal expression, up to the next open brace { in range
         int ridx = tokens.indexOf("{", curr + 1);
         if (ridx == -1 || ridx > hi) ridx = hi;
-        be.expr.add(parseConcatExpr(tokens, curr, ridx));
+        be.add(parseConcatExpr(tokens, curr, ridx));
         curr = ridx; //move on to the next ConcatExpr to be parsed
       }
       
       return be;
     }
-    BranchExpr be = new BranchExpr();
-    be.hasRHS = true;
-    be.lhs = parseBranchExpr(tokens, lo, idx);
-    be.rhs = parseBranchExpr(tokens, idx + 1, hi);
+    BranchExpr be = new BranchExpr(true,
+                                   parseBranchExpr(tokens, lo, idx),
+                                   parseBranchExpr(tokens, idx + 1, hi));
     return be;
   }
   
@@ -262,13 +228,12 @@ public class BackusNaur {
     //db("concat: " + tokens.subList(lo, hi));
   
     ConcatExpr expr = new ConcatExpr();
-    expr.items = new Vector<Item>();
     for (int i = lo; i < hi; i++) {
       String v = tokens.get(i);
       if (v.length() >= 2 && v.charAt(0) == '<' && v.charAt(v.length() - 1) == '>') {
-        expr.items.add(new Item(v.substring(1, v.length() - 1), false));
+        expr.addItem(v.substring(1, v.length() - 1), false);
       } else {
-        expr.items.add(new Item(v, true)); //string literal
+        expr.addItem(v, true); //string literal
       }
     }
     return expr;
@@ -324,9 +289,8 @@ public class BackusNaur {
   public boolean matches(String s, String t) throws Exception {
     if (!defs.containsKey(s))
       throw new Exception("Error: symbol " + s + " not defined.");
-    
-    
-    return true;
+        
+    return defs.get(s).matches(t);
   }
   
   /******************* Tests ******************/
