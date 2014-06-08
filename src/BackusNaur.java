@@ -34,40 +34,23 @@ public class BackusNaur {
   
   /****************** CONSTRUCTION ******************/
   
-  //constructor from file
-  public BackusNaur(File f) {
-    BufferedReader in;
+  private static String fileToString(File f) throws Exception {
+    StringBuilder sb = new StringBuilder();
+    String line;
     try {
-      in = new BufferedReader(new FileReader(f));
-      int line_num = 0;
-      String line;
-      Vector<String> tokens = new Vector<String>();
-      
-      while ((line = in.readLine()) != null) {
-        line_num++;
-        if ((line = line.trim()).isEmpty()) continue;
-        
-        Vector<String> lineTokens = getTokens(line);       
-        if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
-          if (!lineTokens.isEmpty()) {
-            try {
-              parseDefinition(lineTokens);
-            } catch (Exception e) {
-              System.err.println("Error parsing Backus-Naur file on line " + line_num);
-              System.err.println("\t" + e.getMessage());
-              e.printStackTrace();
-            }
-          }
-          tokens = lineTokens;
-        } else {
-          tokens.addAll(lineTokens);
-        }
-      }
+      BufferedReader in = new BufferedReader(new FileReader(f));
+      while ((line = in.readLine()) != null) sb.append(line + "\n");
     } catch (IOException e) {
       System.err.println("Error loading Backus-Naur definition file.");
       System.err.println("\tCannot load file: " + f.getName());
       e.printStackTrace();
     }
+    return sb.toString();
+  }
+  
+  //constructor from file
+  public BackusNaur(File f) throws Exception {
+    this(fileToString(f));
   }
   
   //constructor from String
@@ -148,12 +131,10 @@ public class BackusNaur {
   //parses the Vector of tokens and appends this to the list of tokens
   private void parseDefinition(Vector<String> tokens) throws Exception {   
     //check to make sure the LHS of the line is in angled brackets
-    if (!validVariable(tokens.get(0))) {
+    if (!validVariable(tokens.get(0)))
       throw new Exception("1st token on each line must be enclosed in angle brackets.");
-    }
-    if (!tokens.get(1).equals("::=")) {
+    if (!tokens.get(1).equals("::="))
       throw new Exception("2nd token on each line must be \"::=\".");
-    }
     defs.put(tokens.get(0).substring(1, tokens.get(0).length() - 1),
              parseBranchExpr(tokens, 2, tokens.size()));
   }
@@ -284,20 +265,70 @@ public class BackusNaur {
   }
   
   /****************** (Public) MATCHING INPUTS *******************/
+  private static final int MAX_DEPTH = 50;
+  private boolean recursedTooDeep;
+  
+  //returns 1 more than the index of the location up to where matched
+  private int match(ConcatExpr ce, Vector<String> tokens, int lo, int depth) {
+    int id = lo;
+    //db("CE " + lo + " " + depth);
+    for (int i = 0; i < ce.items.size(); i++) {
+      if (id >= tokens.size()) return -1;
+      if (ce.items.get(i).isLiteral) {
+        if (!tokens.get(id).equals(ce.items.get(i).value)) {
+          return -1;
+        }
+        id++; //move to next token
+      } else {
+        //try to match the symbol
+        id = match(defs.get(ce.items.get(i).value), tokens, id, depth + 1);
+        if (id < 0) return id;
+      }
+    }
+    return id;
+  }
+  
+  private int match(BranchExpr be, Vector<String> tokens, int lo, int depth) {
+    if (lo == tokens.size()) return lo;
+    //db("BE " + lo + " " + depth);
+    if (depth > MAX_DEPTH) return -1;
+    if (!be.hasRHS) {
+      int id = lo;
+      for (int i = 0; i < be.expr.size(); i++) {
+        if (id >= tokens.size()) {
+          return -1;
+        }
+        id = match(be.expr.get(i), tokens, id, depth + 1);
+        if (id < 0) return id;
+      }
+      return id;
+    }
+    return Math.max(match(be.lhs, tokens, lo, depth + 1),
+                    match(be.rhs, tokens, lo, depth + 1));
+  }
   
   //returns whether the symbol s accepts a text t
-  public boolean matches(String s, String t) throws Exception {
+  public int matches(String s, String t) throws Exception {
     if (!defs.containsKey(s))
       throw new Exception("Error: symbol " + s + " not defined.");
-        
-    return defs.get(s).matches(t);
+    
+    Vector<String> tTokens = new Vector<String>(Arrays.asList(t.split("\\s+")));
+    
+    recursedTooDeep = false;
+    int result = match(defs.get(s), tTokens, 0, 0);
+    if (recursedTooDeep) {
+      throw new Exception("Text cannot be matched - recursion too deep!");
+    }
+    return result;
   }
   
   /******************* Tests ******************/
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     //System.out.println(getTokens("<opt-suffix-part> ::= \"Sr.\" | \"Jr.\" | <roman-numeral> | \"\""));
     BackusNaur bn = new BackusNaur(new File("resources/test.bn"));
-    db(bn.validate());
+    if (bn.validate()) db("Validated!\n");
+    
+    db(bn.matches("article", "2 - 3"));
   }
 }

@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Vector;
 
 class BranchExpr {
@@ -28,13 +29,6 @@ class BranchExpr {
   
   public void add(ConcatExpr ce) {
     this.expr.add(ce);
-  }
-  
-  //does this Branch expression match the text t?
-  public boolean matches(String t) {
-    Vector<String> tTokens = new Vector(Arrays.asList(t.split("\\s+")));
-    
-    return true;
   }
   
 }

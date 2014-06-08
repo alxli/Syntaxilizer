@@ -18,9 +18,11 @@ class ConcatExpr {
   
   public ConcatExpr() {
     items = new Vector<Item>();
+    quantifier = 0;
   }
   
   public void addItem(String v, boolean l) {
     items.add(new Item(v, l));
   }
+  
 }
