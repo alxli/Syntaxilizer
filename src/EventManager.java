@@ -56,6 +56,10 @@ public class EventManager implements ActionListener {
   JPanel statusPanel;
   JLabel statusLabel;
   
+  //Help dialogue box
+  HelpFrame helpFrame;
+  ResultFrame resultFrame;
+  
   public EventManager() {
     helpButton = new JLabel("<html><a href=\"#\">Help</a></html>");
     helpButton.setAlignmentX(SwingConstants.RIGHT);
@@ -64,9 +68,9 @@ public class EventManager implements ActionListener {
       @Override
       public void mouseClicked(MouseEvent me) {
         try {
-          System.err.println("Help Clicked!");
+          helpFrame = new HelpFrame();
         } catch (Exception e) {
-          e.printStackTrace();
+          e.printStackTrace(); //???
         }
       }
     });
@@ -218,13 +222,12 @@ public class EventManager implements ActionListener {
   String symbolToMatch;
   
   HashMap<String, TreeSet<String>> res; //temp map to store results
-  ResultFrame resultFrame;
   
   /******************* PROCESS ACTIONS *******************/
   
   @Override
   public void actionPerformed(ActionEvent ae) {
-    if (ae.getSource().equals(optionsBN)) {
+    if (ae.getSource().equals(optionsBN)) { //Backus-Naur example option
       if (optionsBN.getSelectedItem().toString().startsWith("None")) return;
       try { //load example BN
         File f = new File(exdir + optionsBN.getSelectedItem());
@@ -234,12 +237,10 @@ public class EventManager implements ActionListener {
         JOptionPane.showMessageDialog(Main.f, e.getMessage(),
                                       "Error loading example file.",
                                       JOptionPane.WARNING_MESSAGE);
-        return;
       }
       return;
     }
-    
-    if (ae.getSource().equals(optionsTexts)) {
+    if (ae.getSource().equals(optionsTexts)) { //Text example option
       if (optionsTexts.getSelectedItem().toString().startsWith("None")) return;
       try { //load example texts
         File f = new File(exdir + optionsTexts.getSelectedItem());
@@ -249,7 +250,6 @@ public class EventManager implements ActionListener {
         JOptionPane.showMessageDialog(Main.f, e.getMessage(),
                                       "Error loading example text.",
                                       JOptionPane.WARNING_MESSAGE);
-        return;
       }
       return;
     }

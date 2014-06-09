@@ -1,7 +1,6 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,24 +8,6 @@ import java.util.HashSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
-
-/**
- * Extended Backus-Naur Form Implementation
- * 
- *    |   - OR operator: Either the LHS or the RHS occurs
- * 
- * Grouping Expressions:
- *    {}  - Enclosed expression can occur 0 or more times
- *    {}* - Enclosed expression can occur 0 or more times
- *    {}+ - Enclosed expression can occur 1 or more times
- *    {}? - Enclosed expression can occur 0 or 1 times
- *    []  - Enclosed expression can occur 0 or 1 times
- * 
- * Quantifiers:
- *    * - The preceding item can occur 0 or more times
- *    + - The preceding item can occur 1 or more times
- *    ? - The preceding item can occur 0 or 1 times
- */
 
 public class BackusNaur {
   
