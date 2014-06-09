@@ -1,3 +1,13 @@
+/**
+ * Main.java
+ * @author Alex Li <alextrovert@gmail.com>
+ * 
+ * Contains the front-end window elements, and GUI layouts. * 
+ * The back-end (algorithms and definition matching)
+ * is stored in BackusNaur.java. Interface is as follows:
+ *    Main --> EventManager <--> BackusNaur
+ */
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;

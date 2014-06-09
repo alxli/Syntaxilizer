@@ -1,3 +1,9 @@
+/**
+ * BackusNaur.java
+ * 
+ * Backus-Naur Form interpreter and matcher
+ */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -324,7 +330,8 @@ public class BackusNaur {
       throw new Exception("Error: symbol " + s + " not defined.");
     
     //remove all non-word characters 0-9, a-z, A-Z, then split into tokens
-    Vector<String> tTokens = new Vector<String>(Arrays.asList(t.replace("[\\W]+", "").split("\\s+")));
+    Vector<String> tTokens = new Vector<String>(
+        Arrays.asList(t.replaceAll("[.,!@#$%^&*()]", "").split("\\s+")));
     
     recursedTooDeep = false;
     results = m;

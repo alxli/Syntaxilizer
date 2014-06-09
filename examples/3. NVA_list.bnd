@@ -5,6 +5,6 @@
 
 <adjective> ::= good | bad | ugly
 
-<verb> ::= eats | dinks
+<verb> ::= eats | drinks | sips
 
 <adverb> ::= nicely

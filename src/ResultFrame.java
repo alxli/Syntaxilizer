@@ -1,3 +1,9 @@
+/**
+ * ResultFrame.java
+ * 
+ * Simple frame to display results of the parsing
+ */
+
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
