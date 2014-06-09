@@ -1,0 +1,10 @@
+<proper-noun> ::= cat | milk
+
+<subject-pronoun> ::= I | you | he | she | they | we
+<object-pronoun> ::= me | you | him | her | them
+
+<adjective> ::= good | bad | ugly
+
+<verb> ::= eats | dinks
+
+<adverb> ::= nicely

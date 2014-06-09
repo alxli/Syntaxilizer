@@ -1,0 +1,4 @@
+<sentence>            ::= <subject-noun-phrase> <verb-phrase> | <subject-noun-phrase> <verb-phrase> <object-noun-phrase>
+<subject-noun-phrase> ::= "the" <proper-noun> | "the" <adjective> <proper-noun> | <subject-pronoun>
+<object-noun-phrase>  ::= "the" <proper-noun> | "the" <adjective> <proper-noun> | <object-pronoun>
+<verb-phrase>         ::= <verb> | <adverb> <verb>

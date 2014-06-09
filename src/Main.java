@@ -43,11 +43,11 @@ public class Main {
     //Set layouts and add things from EventManager to panel    
     GridBagConstraints c = new GridBagConstraints();
     
-    c.fill = GridBagConstraints.NONE;
-    c.gridwidth = 2;
+    c.fill = GridBagConstraints.BOTH;
+    c.gridwidth = 1;
     c.gridx = 0;
     c.gridy = 0;
-    c.insets = new Insets(10, 10, 10, 10);
+    c.insets = new Insets(10, 10, 10, 0);
     c.anchor = GridBagConstraints.LINE_START;
     panel.add(em.step1, c);
     
@@ -55,12 +55,11 @@ public class Main {
     c.gridwidth = 1;
     c.gridx = 1;
     c.gridy = 0;
-    c.insets = new Insets(10, 10, 10, 10);
+    c.insets = new Insets(10, 0, 10, 10);
     c.anchor = GridBagConstraints.LINE_END;
     panel.add(em.helpButton, c);
     
     c.fill = GridBagConstraints.BOTH;
-    c.gridheight = 1;
     c.gridwidth = 1;
     c.gridx = 0;
     c.gridy = 1;
@@ -73,9 +72,9 @@ public class Main {
     sidepanel1.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     sidepanel1.setBackground(new Color(130, 180, 200));
     sidepanel1.setLayout(new GridLayout(5, 1, 5, 5));
-    sidepanel1.add(em.optionsPromptBN);
+    sidepanel1.add(em.promptBN);
     sidepanel1.add(em.optionsBN);
-    sidepanel1.add(em.optionsPromptDicts);
+    sidepanel1.add(em.promptDicts);
     sidepanel1.add(em.optionsDicts);
     sidepanel1.add(em.lockButton);
     
@@ -95,6 +94,7 @@ public class Main {
 
     c.fill = GridBagConstraints.BOTH;
     c.gridwidth = 1;
+    c.gridheight = 2;
     c.gridx = 0;
     c.gridy = 4;
     c.weightx = 10;
@@ -105,18 +105,37 @@ public class Main {
     JPanel sidepanel2 = new JPanel();
     sidepanel2.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     sidepanel2.setBackground(new Color(130, 180, 200));
-    sidepanel2.setLayout(new GridLayout(5, 1, 5, 5));
-    sidepanel2.add(em.optionsPromptTexts);
+    sidepanel2.setLayout(new GridLayout(6, 1, 5, 5));
+    sidepanel2.add(em.promptTexts);
     sidepanel2.add(em.optionsTexts);
+    sidepanel2.add(em.promptSymbols);
+    sidepanel2.add(em.optionsSymbols);
     sidepanel2.add(em.step3);
     sidepanel2.add(em.analyzeButton);
-    sidepanel2.add(em.resetButton);
     c.fill = GridBagConstraints.BOTH;
+    c.gridwidth = 1;
+    c.gridheight = 1;
     c.gridx = 1;
     c.gridy = 4;
     c.weightx = 3;
-    c.weighty = 0;
+    c.weighty = 5;
+    c.insets = new Insets(10, 10, 0, 10);
     panel.add(sidepanel2, c);
+    
+    JPanel sidepanel3 = new JPanel();
+    sidepanel3.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    sidepanel3.setBackground(new Color(130, 180, 200));
+    sidepanel3.setLayout(new GridLayout(1, 1, 5, 5));
+    sidepanel3.add(em.resetButton);
+    c.fill = GridBagConstraints.BOTH;
+    c.gridwidth = 1;
+    c.gridheight = 1;
+    c.gridx = 1;
+    c.gridy = 5;
+    c.weightx = 3;
+    c.weighty = 2;
+    c.insets = new Insets(10, 10, 10, 10);
+    panel.add(sidepanel3, c);
     
     f.add(panel);
     f.add(em.statusPanel, BorderLayout.SOUTH);
