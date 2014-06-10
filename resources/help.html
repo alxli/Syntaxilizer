@@ -1,0 +1,19 @@
+<html>
+
+<h2 style="margin-bottom: -15px;">Syntaxilizer</h2>
+<p>Version 1.0</p><br/>
+
+<p>Welcome to Syntaxilizer, a simple formal language interpreter. In mathematics, computer science, and linguistics, a formal language is a set of strings of symbols that may be constrained by rules that are specific to it. All formal languages may be represented by finite state automatons (FSA). In this case, we use the <a href="http://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form">Backus-Naur form</a> to define a language. To understand how to use Syntaxilizer, you'll first have to become familiar with this notation system with a bit of research.</p>
+
+<br/><hr/>
+<h3>Implementation Details</h3>
+<p>Since the Backus-Naur form is typically used to <i>describe</i> grammars, languages, and syntax, it is rarely ever implemented in code. Specifications of the form varies from place to place. Syntaxilizer supports the original Backus-Naur form (<b>not</b> Extended Backus-Naur form, using quantifiers like {}, {}?, [], etc). You can represent a symbol by enclosing it in angle brackets <code>&lt;&gt;</code>. You can represent a literal value optionally using quotation marks "". Anything not in quotations will be assumed to be a literal, with the exception of the pipe character <code>|</code>, which represents a union (matching either the statement on its left or its right). In this release, recursive definitions like <code>&lt;foo&gt; = &lt;foo&gt; | "bar"</code> are not supported.</p>
+
+<br/><hr/>
+<h3>Dictionaries</h3>
+<p>Sometimes you may wish to load a long list of predefined words without having them clutter up the editing area. A Backus-Naur dictionary (.bnd) file is the same as the normal Backus-Naur Form. When you select a dictionary file, it will be loaded in conjunction with the current inputted form, so definitions from the current view may depend on those from the definitions file and vice versa. You may load a dictionary by placing the .bnd file in the examples folder, and it will be loaded in the list below.</p>
+
+<br><hr/>
+<h3>Analysis</h3>
+<p>After you input a piece of text into the second panel, the automaton will tell you whether your text matches the language you have defined. Comparisons are <i>not</i> case sensitive. <b>All punctuation is stripped from your text, and your sentence will be turned into tokens before they're compared to the automaton</b>. Be careful, you have to be really precise with the definition!</p>
+</html>

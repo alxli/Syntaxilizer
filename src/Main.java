@@ -1,11 +1,9 @@
 /**
- * Main.java
- * @author Alex Li <alextrovert@gmail.com>
+ * Front-end that implements GUI elements.
+ * All JFrame components are stored in EventManager, the interface.
  * 
- * Contains the front-end window elements, and GUI layouts. * 
- * The back-end (algorithms and definition matching)
- * is stored in BackusNaur.java. Interface is as follows:
- *    Main --> EventManager <--> BackusNaur
+ * @author    Alex Li <alextrovert@gmail.com>
+ * @version   1.0
  */
 
 import java.awt.BorderLayout;
@@ -50,7 +48,7 @@ public class Main {
     panel.setBackground(new Color(152, 186, 200));
     panel.setLayout(new GridBagLayout());
    
-    //Set layouts and add things from EventManager to panel    
+    //Set layouts and add components from EventManager to the JPanel    
     GridBagConstraints c = new GridBagConstraints();
     
     c.fill = GridBagConstraints.BOTH;
@@ -110,7 +108,7 @@ public class Main {
     c.weightx = 10;
     c.weighty = 10;
     c.insets = new Insets(10, 10, 10, 10);
-    panel.add(em.scrollPaneIn, c);
+    panel.add(em.scrollPaneText, c);
     
     JPanel sidepanel2 = new JPanel();
     sidepanel2.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));

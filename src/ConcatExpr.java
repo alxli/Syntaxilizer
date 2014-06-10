@@ -1,3 +1,14 @@
+/**
+ * ConcatExpr represents a leaf node in the syntax tree
+ * 
+ * The text must match all of the Items in order.
+ * An item is either a symbol or a literal value.
+ * 
+ * @author    Alex Li <alextrovert@gmail.com>
+ * @version   1.0
+ */
+
+
 import java.util.Vector;
 
 class ConcatExpr {
@@ -12,15 +23,21 @@ class ConcatExpr {
     }
   }
   
-  //the things that it concatenates
   Vector<Item> items;
-  char quantifier;
+  char quantifier; //For later releases
   
+  /**
+   * Constructor
+   */
   public ConcatExpr() {
     items = new Vector<Item>();
-    quantifier = 0;
   }
   
+  /**
+   * Appends an item to the ordered list of items that this much match
+   * @param v   the value of the Item
+   * @param l   whether the item is a literal
+   */
   public void addItem(String v, boolean l) {
     items.add(new Item(v, l));
   }

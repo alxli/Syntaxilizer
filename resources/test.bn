@@ -1,6 +1,2 @@
-<statement> ::= <hello-world>
-<hello-world> ::= <hello> | <world>
-<hello> ::= hello
-<world> ::= world
-<two-vowels> ::= <vowel> <vowel>
-<vowel> ::= A|E|I|O|U
+<fruit> ::= <fruit-name>
+<fruit-name> ::= Apple | Apricot | Avocado | Banana | Breadfruit | Bilberry | Blackberry | Blackcurrant | Blueberry | Boysenberry | Cantaloupe | Currant | Cherry | Cherimoya | Cloudberry | Coconut | Cranberry | Cucumber | Damson | Date | Dragonfruit | Durian | Eggplant | Elderberry | Feijoa | Fig | Goji berry | Gooseberry | Grape | Raisin | Grapefruit | Guava | Huckleberry | Honeydew | Jackfruit | Jambul | Jujube | Kiwi fruit | Kumquat | Lemon | Lime | Loquat | Lychee | Mango | Melon | Cantaloupe | Honeydew | Watermelon | Rock melon | Miracle fruit | Mulberry | Nectarine | Nut | Olive | Orange | Clementine | Mandarine | Blood Orange | Tangerine | Papaya | Passionfruit | Peach | Pepper | Chili Pepper | Bell Pepper | Pear | Williams pear or Bartlett pear | Persimmon | Physalis | Plum/prune | Pineapple | Pomegranate | Pomelo | Purple Mangosteen | Quince | Raspberry | Western raspberry | Rambutan | Redcurrant | Salal berry | Satsuma | Star fruit | Strawberry | Tamarillo | Ugli fruit | Watermelon

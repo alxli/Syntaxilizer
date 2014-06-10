@@ -1,8 +1,8 @@
 /**
- * EventManager.java
+ * Interface between the front and back-ends.
  * 
- * Interface between front-end and back-end.
- * Stores all child components of the JFrame
+ * @author    Alex Li <alextrovert@gmail.com>
+ * @version   1.0
  */
 
 import java.awt.Color;
@@ -38,20 +38,20 @@ public class EventManager implements ActionListener {
   JLabel resetBotton, helpButton;
   
   JLabel step1, promptBN, promptDicts, promptSymbols;
-  JComboBox optionsBN, optionsDicts;
+  JComboBox<String> optionsBN, optionsDicts;
   JButton lockButton;
   
   JTextArea editorBN; //Backus-Naur editor
   JScrollPane scrollPaneBN; //to contain the BN editor
   
   JLabel step2, promptTexts, step3;
-  JComboBox optionsTexts, optionsSymbols;
+  JComboBox<String> optionsTexts, optionsSymbols;
   JButton analyzeButton, resetButton;
   
-  JTextArea editorIn; //to contain the input text to be parsed
-  JScrollPane scrollPaneIn; //to contain the text editor
+  JTextArea editorText; //to contain the input text to be parsed
+  JScrollPane scrollPaneText; //to contain the text editor
   
-  //status bar at the bottom
+  //for the status bar at the bottom
   JPanel statusPanel;
   JLabel statusLabel;
   
@@ -59,6 +59,9 @@ public class EventManager implements ActionListener {
   HelpFrame helpFrame;
   ResultFrame resultFrame;
   
+  /**
+   * Constructor
+   */
   public EventManager() {
     helpButton = new JLabel("<html><a href=\"#\">Help</a></html>");
     helpButton.setAlignmentX(SwingConstants.RIGHT);
@@ -66,14 +69,14 @@ public class EventManager implements ActionListener {
     helpButton.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent me) {
+        if (helpFrame != null) helpFrame.dispose();
         try {
           helpFrame = new HelpFrame();
         } catch (Exception e) {
-          e.printStackTrace(); //???
+          e.printStackTrace();
         }
       }
     });
-    
     step1 = new JLabel();
     step1.setHorizontalAlignment(SwingConstants.LEFT);
     step1.setFont(Main.normalFont.deriveFont(13.0f));
@@ -89,7 +92,6 @@ public class EventManager implements ActionListener {
         }
       }
     });
-    
     editorBN = new JTextArea(); //Backus-Naur editor
     //editorBN.setLineWrap(true);
     //editorBN.setWrapStyleWord(true);
@@ -99,10 +101,10 @@ public class EventManager implements ActionListener {
     scrollPaneBN = new JScrollPane(editorBN);
     
     promptBN = new JLabel("<html>Enter the Backus-Naur form on the left,<br/>" +
-                                  "Or load from file/examples:</html>");
+                                "Or load from file/examples:</html>");
     promptBN.setFont(Main.normalFont.deriveFont(13.0f));
     
-    optionsBN = new JComboBox(); //for selecting examples
+    optionsBN = new JComboBox<String>(); //for selecting examples
     optionsBN.setFont(Main.monospaceFont.deriveFont(13.0f));
     optionsBN.addActionListener(this);
     
@@ -110,7 +112,7 @@ public class EventManager implements ActionListener {
                                   "Or load your custom one from file:</html>");
     promptDicts.setFont(Main.normalFont.deriveFont(13.0f));
 
-    optionsDicts = new JComboBox(); //for selecting dictionaries
+    optionsDicts = new JComboBox<String>(); //for selecting dictionaries
     optionsDicts.setFont(Main.monospaceFont.deriveFont(13.0f));
     
     lockButton = new JButton("Lock and Load");
@@ -126,13 +128,13 @@ public class EventManager implements ActionListener {
     promptTexts = new JLabel("<html>Load a block text to be analyzed,<br/>" +
                                     "From examples, or from file:</html>");
     promptTexts.setFont(Main.normalFont.deriveFont(13.0f));
-    optionsTexts = new JComboBox(); //for loading input example texts
+    optionsTexts = new JComboBox<String>(); //for loading input example texts
     optionsTexts.setFont(Main.monospaceFont.deriveFont(13.0f));
     optionsTexts.addActionListener(this);
     
     promptSymbols = new JLabel("<html>Select a symbol to match:</html>");
     promptSymbols.setFont(Main.normalFont.deriveFont(13.0f));
-    optionsSymbols = new JComboBox();
+    optionsSymbols = new JComboBox<String>();
     optionsSymbols.setFont(Main.monospaceFont.deriveFont(13.0f));
     
     step3 = new JLabel();
@@ -150,14 +152,14 @@ public class EventManager implements ActionListener {
     resetButton.setActionCommand("Reset");
     resetButton.addActionListener(this);
     
-    editorIn = new JTextArea(); //Input text editor
+    editorText = new JTextArea();
     //editorIn.setLineWrap(true);
     //editorIn.setWrapStyleWord(true);
-    editorIn.setDisabledTextColor(Color.darkGray);
-    editorIn.setMargin(new Insets(5, 5, 5, 5)); //inside padding
-    editorIn.setFont(Main.monospaceFont.deriveFont(13.0f));
-    scrollPaneIn = new JScrollPane(editorIn);
-
+    editorText.setDisabledTextColor(Color.darkGray);
+    editorText.setMargin(new Insets(5, 5, 5, 5)); //inside padding
+    editorText.setFont(Main.monospaceFont.deriveFont(13.0f));
+    scrollPaneText = new JScrollPane(editorText);
+    
     //Create a status bar at the bottom
     statusPanel = new JPanel();
     statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -174,7 +176,9 @@ public class EventManager implements ActionListener {
     refresh();
   }
   
-  //load all files with .bn extension 
+  /**
+   * Load all example BNF's from exdir with extension .bn
+   */
   private void loadExampleBN() {
     File dir = new File(exdir);
     optionsBN.addItem("None");
@@ -188,6 +192,9 @@ public class EventManager implements ActionListener {
     }
   }
   
+  /**
+   * Load all example dictionary files from exdir with extension .bnd
+   */
   private void loadExampleDicts() {
     File dir = new File(exdir);
     optionsDicts.addItem("None");
@@ -201,6 +208,9 @@ public class EventManager implements ActionListener {
     }
   }
   
+  /**
+   * Load all example texts from exdir with extension .txt
+   */
   private void loadExampleTexts() {
     optionsTexts.addItem("None");
     File dir = new File(exdir);
@@ -216,12 +226,31 @@ public class EventManager implements ActionListener {
   
   enum State { step1, step2, help, results };
   State currState = State.step1;
-  BackusNaur bn;
-  String symbolToMatch;
   
-  HashMap<String, TreeSet<String>> res; //temp map to store results
+  BackusNaur bn; //the Backus-Naur definition
+  String symbolToMatch; //symbol to match
+  HashMap<String, TreeSet<String>> res; //map to store results
   
-  /******************* PROCESS ACTIONS *******************/
+  /**
+   * Finds all matched symbols, in the order they occur in the input BNF
+   * @return a string version of res, describing the matching results
+   */
+  private String resToString() {
+    if (res == null) return "";
+    String resultStr = "";
+    for (String symbol : bn.symbols) {
+      if (res.containsKey(symbol)) {
+        resultStr += "Matches for <" + symbol + ">:\n";
+        TreeSet<String> matches = res.get(symbol);
+        for (String match : matches)
+          resultStr += ">>> " + match + "\n";
+        resultStr += "\n";
+      }
+    }
+    return resultStr;
+  }
+  
+  /**************************** Process Actions ****************************/
   
   @Override
   public void actionPerformed(ActionEvent ae) {
@@ -242,8 +271,8 @@ public class EventManager implements ActionListener {
       if (optionsTexts.getSelectedItem().toString().startsWith("None")) return;
       try { //load example texts
         File f = new File(exdir + optionsTexts.getSelectedItem());
-        editorIn.setText(BackusNaur.fileToString(f));
-        editorIn.setCaretPosition(editorIn.getDocument().getLength());
+        editorText.setText(BackusNaur.fileToString(f));
+        editorText.setCaretPosition(editorText.getDocument().getLength());
       } catch (Exception e) {
         JOptionPane.showMessageDialog(Main.f, e.getMessage(),
                                       "Error loading example text.",
@@ -251,7 +280,6 @@ public class EventManager implements ActionListener {
       }
       return;
     }
-    
     //Button clicks    
     if (ae.getActionCommand() == "Load") {
       try {
@@ -269,20 +297,19 @@ public class EventManager implements ActionListener {
                                       JOptionPane.WARNING_MESSAGE);
         return;
       }
-      
       statusLabel.setText("Successfully loaded Backus-Naur form!");
       currState = State.step2;
       
       //Add possible symbols to select from
-      optionsSymbols.removeAll();
-      for (String s : bn.defs.keySet()) optionsSymbols.addItem(s);
+      optionsSymbols.removeAllItems();
+      for (String s : bn.symbols) optionsSymbols.addItem(s);
 
     } else if (ae.getActionCommand() == "Analyze") {
       boolean matched = false;
       try {
         res = new HashMap<String, TreeSet<String>>();
         matched = bn.matches(optionsSymbols.getSelectedItem().toString(),
-                             editorIn.getText(), res);
+                             editorText.getText(), res);
 
       } catch (Exception e) {
         JOptionPane.showMessageDialog(Main.f, e.getMessage(),
@@ -290,16 +317,15 @@ public class EventManager implements ActionListener {
                                       JOptionPane.WARNING_MESSAGE);
         return;
       }
-      
-      
       if (resultFrame != null) resultFrame.dispose();
-      resultFrame = new ResultFrame(matched, res);
+      resultFrame = new ResultFrame(matched, resToString());
       currState = State.results;
       
     } else if (ae.getActionCommand() == "Reset") {
       currState = State.step1;
       //editorBN.setText("");
-      editorIn.setText("");
+      editorText.setText("");
+      optionsSymbols.removeAllItems();
     }
     refresh();
   }
@@ -314,14 +340,15 @@ public class EventManager implements ActionListener {
       lockButton.setEnabled(true);
       
       //Disable step 2 components
-      editorIn.setBackground(Color.lightGray);
-      editorIn.setEnabled(false);
+      editorText.setBackground(Color.lightGray);
+      editorText.setEnabled(false);
       optionsTexts.setEnabled(false);
       optionsSymbols.setEnabled(false);
       analyzeButton.setEnabled(false);
       
       //Display status
       statusLabel.setText("Status: Ready");
+      
     } else if (currState == State.step2) {
       //Disable step 1 components
       editorBN.setBackground(Color.lightGray);
@@ -331,8 +358,8 @@ public class EventManager implements ActionListener {
       lockButton.setEnabled(false);
       
       //Enable step 2 components
-      editorIn.setBackground(Color.white);
-      editorIn.setEnabled(true);
+      editorText.setBackground(Color.white);
+      editorText.setEnabled(true);
       optionsTexts.setEnabled(true);
       optionsSymbols.setEnabled(true);
       analyzeButton.setEnabled(true);

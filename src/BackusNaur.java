@@ -1,7 +1,11 @@
 /**
- * BackusNaur.java
+ * Back-end that implements Backus-Naur matching algorithms.
+ * The Backus-Naur Form (BNF) is implemented here as a syntax tree.
+ * A BranchExpr represents a non-leaf node (Union)
+ * A ConcatExpr represents a leaf node of the tree (Concatenation)
  * 
- * Backus-Naur Form interpreter and matcher
+ * @author    Alex Li <alextrovert@gmail.com>
+ * @version   1.0
  */
 
 import java.io.BufferedReader;
@@ -21,10 +25,17 @@ public class BackusNaur {
   
   //Where all the definitions are stored - HashMap<symbol, expression>
   public TreeMap<String, BranchExpr> defs = new TreeMap<String, BranchExpr>();
+  //list of symbol for reference, in the order that they are listed
+  public Vector<String> symbols = new Vector<String>();
   
-  /****************** CONSTRUCTION ******************/
+  /*************************** Construction ***************************/
   
-  static String fileToString(File f) throws Exception {
+  /**
+   * Loads a File into a String, including newlines
+   * @param f   a file in the current relative directory
+   * @return a  string of the file
+   */
+  public static String fileToString(File f) throws Exception {
     StringBuilder sb = new StringBuilder();
     String line;
     try {
@@ -37,12 +48,18 @@ public class BackusNaur {
     return sb.toString();
   }
   
-  //constructor from file
+  /**
+   * Constructor from file
+   * @param f   a file in the current relative directory
+   */
   public BackusNaur(File f) throws Exception {
     this(fileToString(f));
   }
   
-  //constructor from String
+  /**
+   * Constructor from file
+   * @param s   a string of defintiions, separated by new lines
+   */
   public BackusNaur(String s) throws Exception {
     BufferedReader in;
     in = new BufferedReader(new StringReader(s));
@@ -54,9 +71,7 @@ public class BackusNaur {
       line_num++;
       if ((line = line.trim()).isEmpty()) continue;
       
-      Vector<String> lineTokens = getTokens(line);
-      //db(lineTokens);
-      
+      Vector<String> lineTokens = getTokens(line);      
       if (lineTokens.size() > 1 && lineTokens.get(1).equals("::=")) {
         if (!lineTokens.isEmpty()) {
           try {
@@ -75,13 +90,18 @@ public class BackusNaur {
     this.validate();
   }
   
-  //Preprocesses a Backus-Naur, also splitting it into tokens
+  /**
+   * Preprocess a Backus-Naur definition line, splitting it into tokens.
+   * @param s   a line in the Backus-Naur input definition
+   * @return v  a vector of tokens for the input string
+   */
   private static Vector<String> getTokens(String s) {
     //Surround '{', '}', '[', ']', characters with spaces
     //Convert [] to {}?, which is the same representation
     s = s.replace("{", " { ").replace("}", " } ");
     s = s.replace("[", " { ").replace("]", " } ? ");
-    //replace | signs not in quotes
+    
+    //replace pipe | characters that are not in quotes
     s = s.replaceAll("[^\\w\"<>']+\\|[^\\w\"<>']+", " | ");
     
     Vector<String> tokens = new Vector<String>();
@@ -98,9 +118,11 @@ public class BackusNaur {
         }
       } else {
         if (s.charAt(i) == '"') {
-          if (quoteOpened) {
+          if (quoteOpened) { //close the quote
             quoteOpened = false;
-            tokens.add(curr); //can be zero length
+            //split the entire quote into tokens
+            String[] currTokens = curr.split(" ");
+            for (String token : currTokens) tokens.add(token);
             curr = "";
           } else {
             if (curr.length() > 0) tokens.add(curr);
@@ -116,7 +138,10 @@ public class BackusNaur {
     return tokens;
   }
   
-  //parses the Vector of tokens and appends this to the list of tokens
+  /**
+   * Parses a definition from tokens, adding it to def, the collection of definitions
+   * @param tokens  the list of tokens
+   */
   private void parseDefinition(Vector<String> tokens) throws Exception {   
     //check to make sure the LHS of the line is in angled brackets
     if (!validVariable(tokens.get(0)))
@@ -140,16 +165,17 @@ public class BackusNaur {
     if (tokens.size() < 2)
       throw new Exception("Too few tokens on the line!");
     defs.put(symbol, parseBranchExpr(tokens, 2, tokens.size()));
+    symbols.add(symbol);
   }
   
   /**
-   * @params: tokens, and range of tokens [lo, hi) to consider
+   * Creates a BranchExpr from a range [lo, hi) in a list of tokens
+   * @param: tokens a list of tokens from which to get the definition
+   * @param: lo     lower index in the list to consider, inclusive
+   * @param: hi     upper index in the list to consider, exclusive
    */
-  private BranchExpr parseBranchExpr(Vector<String> tokens,
-                                     int lo, int hi) throws Exception {
-    if (lo >= hi) return null; // ???
-    //db(lo + " " + hi + ": " + tokens.subList(lo, hi));
-    
+  private BranchExpr parseBranchExpr(Vector<String> tokens, int lo, int hi) throws Exception {
+    if (lo >= hi) return null;
     //find the last index of the OR symbol, before index hi
     //this is because OR operators works like ((A | B) | C), not (A | (B | C))
     int idx = tokens.lastIndexOf("|", hi - 1);
@@ -157,11 +183,10 @@ public class BackusNaur {
       BranchExpr be = new BranchExpr(false);
      
       int curr = lo;
-      
       while (curr < hi) {
         if (tokens.get(curr).equals("{")) { //does an open curly bracket exist?
-          //find right bracket
-          int lidx = curr, ridx = tokens.indexOf("}", lidx);
+          
+          int lidx = curr, ridx = tokens.indexOf("}", lidx); //find right bracket
           
           //check for existence and in range
           if (ridx >= hi || ridx == -1)
@@ -172,7 +197,6 @@ public class BackusNaur {
               tokens.indexOf("{", lidx + 1) < ridx) {
             throw new Exception("Currently only 1 level of brace quantifiers {} are supported.");
           }
-          
           ConcatExpr ce = parseConcatExpr(tokens, lidx + 1, ridx);
           if (ridx < tokens.size()) {
             if (tokens.get(ridx).equals("*")) ce.quantifier = '*';
@@ -185,7 +209,6 @@ public class BackusNaur {
             ridx++;
           }
           be.add(ce);
-          
           curr = ridx + 1; //skip the current position to after the close brace
           continue; //keep parsing!!!!!
         }
@@ -195,7 +218,6 @@ public class BackusNaur {
         be.add(parseConcatExpr(tokens, curr, ridx));
         curr = ridx; //move on to the next ConcatExpr to be parsed
       }
-      
       return be;
     }
     BranchExpr be = new BranchExpr(true,
@@ -205,33 +227,64 @@ public class BackusNaur {
   }
   
   /**
-   * @params: tokens, and range of tokens [lo, hi) to consider
+   * Creates a ConcatExpr from a range [lo, hi) in a list of tokens
+   * @param: tokens a list of tokens from which to get the definition
+   * @param: lo     lower index in the list to consider, inclusive
+   * @param: hi     upper index in the list to consider, exclusive
    */
-  private ConcatExpr parseConcatExpr(Vector<String> tokens,
-                                     int lo, int hi) {
-    //db("concat: " + tokens.subList(lo, hi));
-  
+  private ConcatExpr parseConcatExpr(Vector<String> tokens, int lo, int hi) {
     ConcatExpr expr = new ConcatExpr();
     for (int i = lo; i < hi; i++) {
       String v = tokens.get(i);
       if (v.length() >= 2 && v.charAt(0) == '<' && v.charAt(v.length() - 1) == '>') {
-        expr.addItem(v.substring(1, v.length() - 1), false);
+        expr.addItem(v.substring(1, v.length() - 1), false); //symbol
       } else {
-        expr.addItem(v, true); //string literal
+        expr.addItem(v, true); //literal value
       }
     }
     return expr;
   }
   
   private static boolean validVariable(String s) {
-    return (s.charAt(0) == '<') &&
-           (s.charAt(s.length() - 1) == '>');
+    return (s.charAt(0) == '<') && (s.charAt(s.length() - 1) == '>');
   }
   
-  /******************* VALIDATION *******************/
+  /**************************** Validation ****************************/
   
   private HashSet<String> invalidSymbols = new HashSet<String>();
   
+  /**
+   * Validate the current BNF, ensuring that all symbols are defined
+   * @throws Exception  a message specifying which symbols are undefined
+   */
+  private void validate() throws Exception {
+    boolean valid = true;
+    //loops through all definitions, for each definition:
+    //  recurse the tree to ensure that all of its symbols are defined
+    for (BranchExpr be : defs.values())
+      if (!validate(be)) valid = false;
+    if (!valid) 
+      throw new Exception("Undefined symbol(s): " + invalidSymbols + "\n" +
+                          "Maybe you should load some dictionaries?");
+  }
+  
+  /**
+   * @param be  BranchExpr to check validity
+   * @return    whether be's symbols are all defined
+   */
+  private boolean validate(BranchExpr be) {
+    if (be.hasRHS)
+      return validate(be.lhs) && validate(be.rhs);
+    boolean valid = true;
+    for (int i = 0; i < be.expr.size(); i++)
+      if (!validate(be.expr.get(i))) valid = false;
+    return valid;
+  }
+  
+  /**
+   * @param ce  ConcatExpr to check validity
+   * @return    whether ce's symbols are all defined
+   */
   private boolean validate(ConcatExpr ce) {
     boolean valid = true;
     for (int i = 0; i < ce.items.size(); i++) {
@@ -245,72 +298,66 @@ public class BackusNaur {
     return valid;
   }
   
-  private boolean validate(BranchExpr be) {
-    if (be.hasRHS)
-      return validate(be.lhs) && validate(be.rhs);
-    boolean valid = true;
-    for (int i = 0; i < be.expr.size(); i++) {
-      if (!validate(be.expr.get(i))) valid = false;
+  /*************************** Matching Input Strings ***************************/
+  
+  //temporary structure to store results that are displayed
+  private HashMap<String, TreeSet<String>> results;
+  
+  //maximum search time (ticks) and maximum depth
+  private static final long MAX_TIME = 2L*1000000000L; //2 seconds
+  private static final int MAX_DEPTH = 2000; //maximum recursion depth
+  private long startTime; //System.nanoTime() when the search started
+  private boolean recursedTooDeep, searchedTooLong;
+  
+  /**
+   * Performs a matching attempt, storing all found matches into m, regardless of matching success
+   * @param s   symbol in to be matched, which must be a key of defs
+   * @param t   text of the user to be tokenized and matched
+   * @param m   an <em>already instantiated</em> HashMap in which the result is stored
+   * @return    whether the definition for the symbol s matches the text t
+   */
+  public boolean matches(String s, String t, HashMap<String, TreeSet<String>> m) throws Exception {
+    if (!defs.containsKey(s))
+      throw new Exception("Error: symbol <" + s + "> not defined.");
+    
+    //remove all non-word characters 0-9, a-z, A-Z, then split into tokens
+    Vector<String> tTokens = new Vector<String>(
+                                  Arrays.asList(t.replaceAll("[.,!@#$%^&*()]", "").split("\\s+")));
+    recursedTooDeep = false;
+    searchedTooLong = false;
+    results = m;
+    startTime = System.nanoTime();
+    int endidx = match(defs.get(s), tTokens, 0, 0);
+    if (recursedTooDeep)
+      throw new Exception("Note: Some searches terminated early due too recursion too deep.");
+    if (searchedTooLong)
+      throw new Exception("Note: Search took too long and was terminated early.");
+    if (endidx == tTokens.size()) {
+      String toks = vectorToStr(tTokens, 0, tTokens.size());
+      if (results.get(s) == null) results.put(s, new TreeSet<String>());
+      results.get(s).add(toks);
     }
-    return valid;
+    return endidx == tTokens.size();
   }
   
-  //validate the Backus-Naur form to make sure everything is defined.
-  private void validate() throws Exception {
-    boolean valid = true;
-    //loops through all definitions
-    for (BranchExpr be : defs.values()) {
-      //recurse the tree to ensure that all "symbols" are defined
-      if (!validate(be)) valid = false;
-    }
-    if (!valid) 
-      throw new Exception("Undefined symbol(s): " + invalidSymbols + "\n" +
-                          "Maybe you should load some dictionaries?");
-  }
-  
-  /****************** (Public) MATCHING INPUTS *******************/
-  
-  private HashMap<String, TreeSet<String>> results; //temporary store results to be displayed
-  
-  private static String vectorToStr(Vector<String> v, int lo, int hi) {
-    if (lo < 0 || hi > v.size()) return "";
-    String res = "[ ";
-    for (int i = lo; i < hi; i++) res += v.get(i) + " ";
-    return res + "]";
-  }
-  
-  private static final int MAX_DEPTH = 50;
-  private boolean recursedTooDeep;
-  
-  //returns 1 more than the index of the location up to where matched
-  private int match(ConcatExpr ce, Vector<String> tokens, int lo, int depth) {
-    int id = lo;
-    //db("CE " + lo + " " + depth);
-    for (int i = 0; i < ce.items.size(); i++) {
-      if (id >= tokens.size()) return -1;
-      if (ce.items.get(i).isLiteral) {
-        if (!tokens.get(id).toLowerCase().
-              equals(ce.items.get(i).value.toLowerCase())) {
-          return -1;
-        }
-        id++; //move to next token
-      } else {
-        //try to match the symbol
-        int prev = id;
-        id = match(defs.get(ce.items.get(i).value), tokens, id, depth + 1);
-        if (id < 0) return id;
-        if (!results.containsKey(ce.items.get(i).value))
-          results.put(ce.items.get(i).value, new TreeSet<String>());
-        results.get(ce.items.get(i).value).add(vectorToStr(tokens, prev, id));
-      }
-    }
-    return id;
-  }
-  
+  /**
+   * Recursive helper function for matching BranchExpr
+   * @param ce      BranchExpr to attempt to match
+   * @param tokens  list of tokens
+   * @param lo      the index of the first element in tokens to start the matching
+   * @param depth   the current depth of the recursion, used to terminate early
+   * @return        one more than the index up to where ce is matched in tokens
+   */
   private int match(BranchExpr be, Vector<String> tokens, int lo, int depth) {
     if (lo == tokens.size()) return lo;
-    //db("BE " + lo + " " + depth);
-    if (depth > MAX_DEPTH) return -1;
+    if (System.nanoTime() - startTime > MAX_TIME) {
+      searchedTooLong = true;
+      return -1;
+    }
+    if (depth > MAX_DEPTH) {
+      recursedTooDeep = true;
+      return -1;
+    }
     if (!be.hasRHS) {
       int id = lo;
       for (int i = 0; i < be.expr.size(); i++) {
@@ -324,40 +371,63 @@ public class BackusNaur {
                     match(be.rhs, tokens, lo, depth + 1));
   }
   
-  //returns whether the symbol s accepts a text t
-  public boolean matches(String s, String t, HashMap<String, TreeSet<String>> m) throws Exception {
-    if (!defs.containsKey(s))
-      throw new Exception("Error: symbol " + s + " not defined.");
-    
-    //remove all non-word characters 0-9, a-z, A-Z, then split into tokens
-    Vector<String> tTokens = new Vector<String>(
-        Arrays.asList(t.replaceAll("[.,!@#$%^&*()]", "").split("\\s+")));
-    
-    recursedTooDeep = false;
-    results = m;
-    int endidx = match(defs.get(s), tTokens, 0, 0);
-    if (recursedTooDeep)
-      throw new Exception("Text cannot be matched - recursion too deep!");
-    //db(endidx);
-    return endidx == tTokens.size();
+  /**
+   * Recursive helper function for matching ConcatExpr
+   * @param ce      ConcatExpr to attempt to match
+   * @param tokens  list of tokens
+   * @param lo      the index of the first element in tokens to start the matching
+   * @param depth   the current depth of the recursion, used to terminate early
+   * @return        one more than the index up to where ce is matched in tokens
+   */
+  private int match(ConcatExpr ce, Vector<String> tokens, int lo, int depth) {
+    int id = lo;
+    for (int i = 0; i < ce.items.size(); i++) {
+      if (id >= tokens.size()) return -1;
+      if (ce.items.get(i).isLiteral) {
+        if (!tokens.get(id).toLowerCase().equals(ce.items.get(i).value.toLowerCase()))
+          return -1;
+        id++; //move to next token
+      } else { //try to match the symbol
+        int prev = id;
+        id = match(defs.get(ce.items.get(i).value), tokens, id, depth + 1);
+        if (id < 0) return id;
+        if (!results.containsKey(ce.items.get(i).value))
+          results.put(ce.items.get(i).value, new TreeSet<String>());
+        results.get(ce.items.get(i).value).add(vectorToStr(tokens, prev, id));
+        if (id >= tokens.size()) return id;
+      }
+    }
+    return id;
   }
   
-  /******************* Back-end Tests ******************/
+  /**
+   * Converts a Vector of the results to a String to be displayed in ResultFrame
+   * @param v   Vector of Strings to concatenate
+   * @param lo  lower bound of indices to consider, inclusive
+   * @param hi  upper bound of indices to consider, exclusive
+   * @return    the converted String
+   */
+  private static String vectorToStr(Vector<String> v, int lo, int hi) {
+    if (lo < 0 || hi > v.size()) return "";
+    String res = "[ ";
+    for (int i = lo; i < hi; i++) res += v.get(i) + " ";
+    return res + "]";
+  }
+  
+  /*************************** Testing ***************************/
 
   public static void main(String[] args) throws Exception {
-    //System.out.println(getTokens("<opt-suffix-part> ::= \"Sr.\" | \"Jr.\" | <roman-numeral> | \"\""));
-    BackusNaur bn = new BackusNaur(new File("resources/test.bn"));
-    if (false) {      
-      HashMap<String, TreeSet<String>> res = null;
-      boolean matched = bn.matches("article", "1 + 1", res);
-      for (String symbol : res.keySet()) {
-        System.out.printf("Matches for <%s>:\n", symbol);
-        TreeSet<String> matches = res.get(symbol);
-        for (String match : matches) {
-          System.out.println(">>> " + match);
-        }
-        System.out.println();
+    BackusNaur bn = new BackusNaur(new File("resources/test.bn"));   
+    HashMap<String, TreeSet<String>> res = new HashMap<String, TreeSet<String>>();
+    boolean matched = bn.matches("fruit", "apple", res);
+    if (matched) System.out.println("matched");
+    for (String symbol : res.keySet()) {
+      System.out.printf("Matches for <%s>:\n", symbol);
+      TreeSet<String> matches = res.get(symbol);
+      for (String match : matches) {
+        System.out.println(">>> " + match);
       }
+      System.out.println();
     }
   }
 }

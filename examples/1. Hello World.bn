@@ -1,4 +1,5 @@
-<statement> ::= <hello-world>
+<statement> ::= <hello-world> | <hi>
 <hello-world> ::= <hello> <world>
 <hello> ::= "hello"
-<world> ::= "world" | "world." | "world!"
+<world> ::= world
+<hi> ::= "hi friend"
